@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Colorful Survey & Poll App</title>
+<style>
+  :root {
+    --blue: #3b82f6;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --pink: #ec4899;
+    --purple: #8b5cf6;
+    --red: #ef4444;
+    --gray-light: #f9fafb;
+    --gray-dark: #1f2937;
+    --text-light: #f3f4f6;
+    --text-dark: #111827;
+    --bg-dark: #121212;
+  }
+
+  /* Page */
+  body {
+    margin: 0; padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--gray-light);
+    color: var(--text-dark);
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark {
+    background: var(--bg-dark);
+    color: var(--text-light);
+  }
+
+  /* Card */
+  .container {
+    max-width: 750px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.1);
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark .container {
+    background: #1e293b;
+    box-shadow: 0 8px 30px rgb(255 255 255 / 0.05);
+  }
+
+  h1, h2 {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+  }
+
+  .survey-title {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--purple);
+    margin-bottom: 0.4rem;
+    text-shadow: 1px 1px 4px var(--pink);
+  }
+
+  /* Buttons (base) */
+  button {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 700;
+    margin-top: 0;
+    font-size: 1.05rem;
+    transition: background 0.2s, transform 0.08s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button:active { transform: translateY(1px); }
+  button:hover:not(:disabled) { background: var(--pink); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  /* Dark toggle (floating) */
+  .toggle-dark {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--purple);
+    color: white;
+    border-radius: 30px;
+    padding: 0.35rem 1rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgb(203 49 144 / 0.7);
+    user-select: none;
+    transition: background 0.3s;
+    z-index: 1000;
+  }
+  body.dark .toggle-dark {
+    background: var(--pink);
+    color: var(--text-dark);
+    box-shadow: 0 3px 8px rgb(139 92 246 / 0.7);
+  }
+
+  /* Survey list buttons */
+  .survey-list ul { list-style: none; padding: 0; margin: 0; }
+  .survey-list li { margin: 1rem 0; }
+  .survey-list button {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.05rem;
+    background: linear-gradient(45deg, var(--blue), var(--green));
+    border-radius: 12px;
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgb(16 185 129 / 0.5);
+  }
+  .survey-list button:hover {
+    background: linear-gradient(45deg, var(--green), var(--blue));
+    box-shadow: 0 6px 16px rgb(59 130 246 / 0.7);
+  }
+
+  /* Form layout */
+  #surveyForm { margin-top: 1rem; }
+  .question {
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed rgba(0,0,0,0.05);
+  }
+  .question:last-child { border-bottom: none; margin-bottom: 0.5rem; padding-bottom: 0; }
+
+  .question > label.question-text {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-weight: 800;
+    font-size: 1.02rem;
+  }
+
+  /* Option rows: consistent alignment */
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.36rem 0;
+  }
+  .option-row input[type="radio"],
+  .option-row input[type="checkbox"] {
+    margin: 0;
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--purple);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .option-row label.option-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 700;
+  }
+  .option-row label.option-label span.option-text {
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+  body.dark .option-row label.option-label span.option-text {
+    color: var(--text-light);
+  }
+
+  /* Rating options (compact, inline) */
+  .rating-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .rating-options label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.45rem;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(0,0,0,0.06);
+    background: rgba(255,255,255,0.5);
+  }
+  body.dark .rating-options label {
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+  }
+  .rating-options input[type="radio"] {
+    margin: 0;
+    width: 0.95rem;
+    height: 0.95rem;
+    accent-color: var(--pink);
+  }
+
+  /* Textarea */
+  textarea {
+    width: 100%;
+    min-height: 88px;
+    resize: vertical;
+    padding: 0.6rem 0.8rem;
+    font-size: 1.05rem;
+    border-radius: 10px;
+    border: 2px solid var(--purple);
+    transition: border-color 0.2s, box-shadow 0.15s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 6px 18px rgba(236,72,153,0.08);
+  }
+
+  /* Button group for submit/back (centered) */
+  .button-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 1.6rem;
+    flex-wrap: wrap;
+  }
+  #backBtn {
+    background: var(--red);
+  }
+  #backBtn:hover { background: #dc2626; }
+
+  /* Results */
+  .results { margin-top: 1.6rem; }
+  .result-label {
+    margin-bottom: 0.15rem;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .result-bar {
+    height: 22px;
+    border-radius: 15px;
+    transition: width 1s ease-in-out;
+    margin-bottom: 0.7rem;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+  }
+
+  ul.text-answers {
+    max-height: 160px;
+    overflow-y: auto;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    color: white;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-style: italic;
+  }
+  ul.text-answers li { margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+  /* Responsive tweaks */
+  @media (max-width: 700px) {
+    .container { padding: 1.2rem 1.2rem; }
+    button { font-size: 0.98rem; padding: 0.65rem 1rem; }
+    .rating-options label { padding: 0.28rem 0.4rem; font-size: 0.95rem; }
+    .option-row label.option-label span.option-text { font-size: 0.95rem; }
+    .result-bar { height: 18px; }
+    .button-group { gap: 0.6rem; }
+  }
+</style>
+</head>
+<body>
+<button class="toggle-dark" id="toggleDark">Dark Mode</button>
+
+<div class="container">
+  <h1>Survey & Poll Application</h1>
+
+  <div class="survey-list" id="surveyList">
+    <h2>Active Surveys</h2>
+    <ul>
+      <li><button class="loadSurveyBtn" data-survey="customer-sat">Customer Satisfaction Survey</button></li>
+      <li><button class="loadSurveyBtn" data-survey="product-feedback">Product Feedback Poll</button></li>
+    </ul>
+  </div>
+
+  <div id="surveyContainer" style="display:none;">
+    <h2 id="surveyTitle" class="survey-title"></h2>
+    <form id="surveyForm" autocomplete="off">
+      <!-- Questions inserted here -->
+    </form>
+
+    <div class="button-group">
+      <button id="submitBtn" disabled>Submit</button>
+      <button id="backBtn">Back to Surveys</button>
+    </div>
+
+    <div id="resultSection" class="results" style="display:none;">
+      <h3>Results</h3>
+      <div id="resultsContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dark mode toggle
+  const toggleBtn = document.getElementById('toggleDark');
+  toggleBtn.onclick = () => {
+    document.body.classList.toggle('dark');
+    toggleBtn.textContent = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+  };
+
+  // Survey definitions
+  const surveys = {
+    'customer-sat': {
+      title: "Customer Satisfaction Survey",
+      questions: [
+        {
+          id: 'q1',
+          text: "How satisfied are you with our service?",
+          type: 'single',
+          options: ['Very satisfied', 'Satisfied', 'Neutral', 'Unsatisfied', 'Very unsatisfied'],
+        },
+        {
+          id: 'q2',
+          text: "Which of our products do you use? (Select all that apply)",
+          type: 'multiple',
+          options: ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'],
+        },
+        {
+          id: 'q3',
+          text: "Rate our customer support:",
+          type: 'rating',
+          scale: 5
+        },
+        {
+          id: 'q4',
+          text: "How likely are you to recommend us to a friend or colleague?",
+          type: 'rating',
+          scale: 10
+        },
+        {
+          id: 'q5',
+          text: "What features would you like to see in the future? (Select all that apply)",
+          type: 'multiple',
+          options: ['More integrations', 'Mobile app', 'Custom reports', 'Chat support', 'Other'],
+        },
+        {
+          id: 'q6',
+          text: "Any suggestions for improvement?",
+          type: 'text',
+        }
+      ]
+    },
+    'product-feedback': {
+      title: "Product Feedback Poll",
+      questions: [
+        {
+          id: 'q1',
+          text: "Which feature do you use the most?",
+          type: 'single',
+          options: ['Feature X', 'Feature Y', 'Feature Z', 'Feature Alpha'],
+        },
+        {
+          id: 'q2',
+          text: "How likely are you to recommend our product?",
+          type: 'rating',
+          scale: 10
+        },
+        {
+          id: 'q3',
+          text: "What do you like most about the product? (Select all that apply)",
+          type: 'multiple',
+          options: ['Ease of use', 'Performance', 'Design', 'Support', 'Price'],
+        },
+        {
+          id: 'q4',
+          text: "What improvements would you like to see?",
+          type: 'text',
+        },
+        {
+          id: 'q5',
+          text: "How often do you use the product?",
+          type: 'single',
+          options: ['Daily', 'Weekly', 'Monthly', 'Rarely', 'First time'],
+        }
+      ]
+    }
+  };
+
+  // Load stored results or init
+  let storedResults = JSON.parse(localStorage.getItem('surveyResults')) || {};
+
+  // Elements
+  const surveyList = document.getElementById('surveyList');
+  const surveyContainer = document.getElementById('surveyContainer');
+  const surveyTitle = document.getElementById('surveyTitle');
+  const surveyForm = document.getElementById('surveyForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultsSection = document.getElementById('resultSection');
+  const resultsContent = document.getElementById('resultsContent');
+  const backBtn = document.getElementById('backBtn');
+
+  let currentSurvey = null;
+
+  // Show survey questions dynamically (wrap each question in .question)
+  function renderSurvey(surveyKey) {
+    currentSurvey = surveys[surveyKey];
+    surveyTitle.textContent = currentSurvey.title;
+    surveyForm.innerHTML = '';
+
+    currentSurvey.questions.forEach((q, idx) => {
+      let questionHTML = `<div class="question">`;
+      questionHTML += `<label class="question-text" for="${q.id}">${idx + 1}. ${q.text}</label>`;
+
+      if (q.type === 'single') {
+        q.options.forEach((opt, i) => {
+          questionHTML += `
+            <div class="option-row">
+              <input type="radio" name="${q.id}" id="${q.id}_${i}" value="${opt}" />
+              <label class="option-label" for="${q.id}_${i}"><span class="option-text">${opt}</span></label>
+            </div>`;
+        });
+      } else if (q.type === 'multiple') {
+        q.options.forEach((opt, i) => {
+          questionHTML += `
+            <div class="option-row">
+              <input type="checkbox" name="${q.id}" id="${q.id}_${i}" value="${opt}" />
+              <label class="option-label" for="${q.id}_${i}"><span class="option-text">${opt}</span></label>
+            </div>`;
+        });
+      } else if (q.type === 'rating') {
+        questionHTML += `<div class="rating-options" aria-label="Rating scale">`;
+        for (let i = 1; i <= q.scale; i++) {
+          // Provide visually compact numeric label and small input
+          questionHTML += `
+            <label for="${q.id}_${i}">
+              <input type="radio" name="${q.id}" id="${q.id}_${i}" value="${i}" />
+              <span class="option-text">${i}</span>
+            </label>`;
+        }
+        questionHTML += `</div>`;
+      } else if (q.type === 'text') {
+        questionHTML += `
+          <textarea id="${q.id}" name="${q.id}" placeholder="Your answer here..."></textarea>
+        `;
+      }
+
+      questionHTML += `</div>`;
+      surveyForm.insertAdjacentHTML('beforeend', questionHTML);
+    });
+
+    submitBtn.disabled = true;
+    resultsSection.style.display = 'none';
+    resultsContent.innerHTML = '';
+    surveyContainer.style.display = 'block';
+    surveyList.style.display = 'none';
+
+    // Add listeners to enable submit only when required questions answered
+    surveyForm.querySelectorAll('input, textarea').forEach(input => {
+      input.addEventListener('change', checkFormComplete);
+    });
+    surveyForm.querySelectorAll('textarea').forEach(input => {
+      input.addEventListener('input', checkFormComplete);
+    });
+  }
+
+  // Check if form is complete enough to submit
+  function checkFormComplete() {
+    if (!currentSurvey) return;
+
+    let allAnswered = true;
+    for (const q of currentSurvey.questions) {
+      if (q.type === 'single' || q.type === 'rating') {
+        // At least one radio must be checked
+        const checked = surveyForm.querySelector(`input[name="${q.id}"]:checked`);
+        if (!checked) {
+          allAnswered = false;
+          break;
+        }
+      } else if (q.type === 'multiple') {
+        // At least one checkbox for multiple must be checked
+        const checkedBoxes = surveyForm.querySelectorAll(`input[name="${q.id}"]:checked`);
+        if (checkedBoxes.length === 0) {
+          allAnswered = false;
+          break;
+        }
+      } else if (q.type === 'text') {
+        // Text input can be optional, so no check here
+      }
+    }
+    submitBtn.disabled = !allAnswered;
+  }
+
+  // Submit survey answers
+  submitBtn.addEventListener('click', () => {
+    if (!currentSurvey) return;
+
+    // Gather answers
+    const answers = {};
+    currentSurvey.questions.forEach(q => {
+      if (q.type === 'single' || q.type === 'rating') {
+        const checked = surveyForm.querySelector(`input[name="${q.id}"]:checked`);
+        answers[q.id] = checked ? checked.value : null;
+      } else if (q.type === 'multiple') {
+        const checkedBoxes = surveyForm.querySelectorAll(`input[name="${q.id}"]:checked`);
+        answers[q.id] = Array.from(checkedBoxes).map(cb => cb.value);
+      } else if (q.type === 'text') {
+        const text = surveyForm.querySelector(`textarea[name="${q.id}"]`);
+        answers[q.id] = text ? text.value.trim() : '';
+      }
+    });
+
+    // Store results in localStorage and update aggregated results
+    if (!storedResults[currentSurvey.title]) storedResults[currentSurvey.title] = [];
+    storedResults[currentSurvey.title].push(answers);
+    localStorage.setItem('surveyResults', JSON.stringify(storedResults));
+
+    // Show results
+    displayResults(currentSurvey.title);
+
+    // Disable submit and inputs after sending
+    submitBtn.disabled = true;
+    surveyForm.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+  });
+
+  // Display aggregated results for the survey
+  function displayResults(surveyTitleText) {
+    resultsSection.style.display = 'block';
+    const allAnswers = storedResults[surveyTitleText] || [];
+    if (allAnswers.length === 0) {
+      resultsContent.innerHTML = '<p>No results yet.</p>';
+      return;
+    }
+
+    // Aggregate answers
+    const surveyKey = Object.keys(surveys).find(key => surveys[key].title === surveyTitleText);
+    const surveyData = surveys[surveyKey];
+    let html = '';
+
+    surveyData.questions.forEach(q => {
+      html += `<div><h4>${q.text}</h4>`;
+      if (q.type === 'text') {
+        const texts = allAnswers.map(a => a[q.id]).filter(t => t);
+        if (texts.length === 0) {
+          html += '<p><em>No responses yet.</em></p>';
+        } else {
+          html += '<ul class="text-answers">';
+          texts.forEach(t => {
+            html += `<li>• ${escapeHtml(t)}</li>`;
+          });
+          html += '</ul>';
+        }
+      } else {
+        let counts = {};
+        if (q.type === 'multiple') {
+          allAnswers.forEach(a => {
+            (a[q.id] || []).forEach(val => {
+              counts[val] = (counts[val] || 0) + 1;
+            });
+          });
+        } else {
+          allAnswers.forEach(a => {
+            const val = a[q.id];
+            if (val !== null) counts[val] = (counts[val] || 0) + 1;
+          });
+        }
+
+        const totalResponses = allAnswers.length;
+        let keys = Object.keys(counts);
+        if (q.type === 'rating') {
+          keys = [...Array(q.scale).keys()].map(i => String(i + 1));
+        } else if (q.type === 'single') {
+          keys = q.options;
+        }
+
+        keys.forEach(option => {
+          const count = counts[option] || 0;
+          const percent = totalResponses ? (count / totalResponses) * 100 : 0;
+          html += `
+            <div class="result-label">${escapeHtml(option)} — ${count} (${percent.toFixed(1)}%)</div>
+            <div class="result-bar" style="width:${percent}%;"></div>`;
+        });
+      }
+      html += '</div><hr style="margin: 1rem 0;">';
+    });
+
+    resultsContent.innerHTML = html;
+  }
+
+  // Escape function for safety when displaying free text
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  // Load survey on button click
+  document.querySelectorAll('.loadSurveyBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const surveyKey = btn.dataset.survey;
+      renderSurvey(surveyKey);
+    });
+  });
+
+  // Back to survey list
+  backBtn.addEventListener('click', () => {
+    surveyContainer.style.display = 'none';
+    surveyList.style.display = 'block';
+    resultsSection.style.display = 'none';
+    submitBtn.disabled = true;
+    currentSurvey = null;
+  });
+
+  // If there are stored results, you can optionally show counts on survey list (not required)
+  // (left intentionally minimal)
+</script>
+</body>
+</html>
